@@ -6,6 +6,17 @@ var homeOrTmp = require('home-or-tmp');
 var PinkiePromise = require('pinkie-promise');
 var mkdirp = require('mkdirp');
 
+var pify = require('pify');
+var fsP = pify.all(fs, PinkiePromise);
+
+function handleEnoent(err) {
+	if (err.code === 'ENOENT') {
+		return undefined;
+	}
+
+	throw err;
+}
+
 function Cacha(namespace, opts) {
 	if (!(this instanceof Cacha)) {
 		return new Cacha(namespace, opts);
@@ -32,15 +43,8 @@ function Cacha(namespace, opts) {
 Cacha.prototype.set = function set(id, content, opts) {
 	var entryPath = path.join(this.path, id);
 
-	return new PinkiePromise(function (resolve, reject) {
-		fs.writeFile(entryPath, content, opts, function (err) {
-			if (err) {
-				reject(err);
-				return;
-			}
-
-			resolve(content);
-		});
+	return fsP.writeFile(entryPath, content, opts).then(function () {
+		return content;
 	});
 };
 
@@ -54,38 +58,15 @@ Cacha.prototype.get = function get(id, opts) {
 	var self = this;
 	var entryPath = path.join(this.path, id);
 
-	return new PinkiePromise(function (resolve, reject) {
-		fs.stat(entryPath, function (err, stats) {
-			if (err) {
-				if (err.code === 'ENOENT') {
-					resolve(undefined);
-					return;
-				}
-
-				reject(err);
-				return;
+	return fsP.stat(entryPath)
+		.then(function (stats) {
+			if (Date.now() - Number(stats.atime) > self.opts.ttl) {
+				return undefined;
 			}
 
-			if (Date.now() - stats.mtime > self.opts.ttl) {
-				resolve(undefined);
-				return;
-			}
-
-			fs.readFile(entryPath, opts, function (err, data) {
-				if (err) {
-					if (err.code === 'ENOENT') {
-						resolve(undefined);
-						return;
-					}
-
-					reject(err);
-					return;
-				}
-
-				resolve(data);
-			});
-		});
-	});
+			return fsP.readFile(entryPath, opts);
+		})
+		.catch(handleEnoent);
 };
 
 Cacha.prototype.getSync = function getSync(id, opts) {
@@ -94,7 +75,7 @@ Cacha.prototype.getSync = function getSync(id, opts) {
 
 	var stats = fs.statSync(entryPath);
 
-	if (Date.now() - stats.mtime > self.opts.ttl) {
+	if (Date.now() - Number(stats.atime) > self.opts.ttl) {
 		return undefined;
 	}
 
@@ -108,9 +89,9 @@ Cacha.prototype.clean = function clean() {
 
 	files.forEach(function (id) {
 		var file = path.join(cacheDir, id);
-		var mtime = fs.statSync(file).mtime;
+		var atime = fs.statSync(file).atime;
 
-		if (Date.now() - mtime > ttl) {
+		if (Date.now() - atime > ttl) {
 			fs.unlinkSync(file);
 		}
 	});

@@ -4,6 +4,10 @@ import mockFs from 'mock-fs';
 import homeOrTmp from 'home-or-tmp';
 import Cacha from './';
 
+function time(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 mockFs({});
 
 test('namespace is required', t => {
@@ -14,27 +18,27 @@ test('namespace is required', t => {
 });
 
 test('sets entity in cache by absolute path', async t => {
-	const cache = new Cacha('/.cacha');
+	const cache = new Cacha('/.absolutly');
 
 	t.is(await cache.set('id1', '1'), '1');
-	t.is(fs.readFileSync('/.cacha/id1', 'utf8'), '1');
+	t.is(fs.readFileSync('/.absolutly/id1', 'utf8'), '1');
 
 	t.is(cache.setSync('id2', '2'), '2');
-	t.is(fs.readFileSync('/.cacha/id2', 'utf8'), '2');
+	t.is(fs.readFileSync('/.absolutly/id2', 'utf8'), '2');
 });
 
 test('sets entity in cache by relative path', async t => {
-	const cache = new Cacha('.cacha');
+	const cache = new Cacha('.relativly');
 
 	t.is(await cache.set('id1', '1'), '1');
-	t.is(fs.readFileSync(homeOrTmp + '/.cacha/id1', 'utf8'), '1');
+	t.is(fs.readFileSync(homeOrTmp + '/.relativly/id1', 'utf8'), '1');
 
 	t.is(cache.setSync('id2', '2'), '2');
-	t.is(fs.readFileSync(homeOrTmp + '/.cacha/id2', 'utf8'), '2');
+	t.is(fs.readFileSync(homeOrTmp + '/.relativly/id2', 'utf8'), '2');
 });
 
 test('gets entity', async t => {
-	const cache = new Cacha('.cacha');
+	const cache = new Cacha('.gets');
 
 	t.is(await cache.set('id1', '1', 'utf8'), '1');
 	t.is(await cache.get('id1', 'utf8'), '1');
@@ -44,27 +48,41 @@ test('gets entity', async t => {
 });
 
 test('supports ttl', async t => {
-	const cache = new Cacha('.cacha', {ttl: 0});
+	const cache = new Cacha('.ttl', {ttl: 10});
 
 	t.is(await cache.set('id1', '1', 'utf8'), '1');
 
-	await new Promise(resolve => setTimeout(resolve, 5));
+	await time(100);
 
 	t.is(await cache.get('id1', 'utf8'), undefined);
 });
 
 test('clean', async t => {
-	const cache = new Cacha('.cached', {ttl: 100});
+	const cache = new Cacha('.clean', {ttl: 50});
 	await cache.set('id1', '1');
 	await cache.set('id2', '2');
 
 	t.ok(await cache.get('id1'));
 	t.ok(await cache.get('id2'));
 
-	await new Promise(resolve => setTimeout(resolve, 200));
+	await time(100);
 
 	cache.clean();
 
 	t.is(await cache.get('id1'), undefined);
 	t.is(await cache.get('id2'), undefined);
+});
+
+test('updates mtime', async t => {
+	const cache = new Cacha('/mtime');
+
+	t.is(await cache.set('id1', '1', 'utf8'), '1');
+	const oldTime = Number(fs.statSync('/mtime/id1').atime);
+
+	await time(100);
+
+	t.is(await cache.get('id1', 'utf8'), '1');
+	const newTime = Number(fs.statSync('/mtime/id1').atime);
+
+	t.ok(newTime > oldTime)
 });
