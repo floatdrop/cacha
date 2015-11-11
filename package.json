@@ -27,7 +27,7 @@
     "pinkie-promise": "^1.0.0"
   },
   "devDependencies": {
-    "ava": "^0.3.0",
+    "ava": "^0.4.0",
     "mock-fs": "^3.4.0",
     "xo": "^0.10.0"
   },

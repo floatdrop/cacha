@@ -1,10 +1,10 @@
 import fs from 'fs';
 import test from 'ava';
-import mock from 'mock-fs';
+import mockFs from 'mock-fs';
 import homeOrTmp from 'home-or-tmp';
 import Cacha from './';
 
-mock({});
+mockFs({});
 
 test('namespace is required', t => {
 	t.throws(function () {
@@ -54,14 +54,14 @@ test('supports ttl', async t => {
 });
 
 test('clean', async t => {
-	const cache = new Cacha('.cached', {ttl: 5});
-	cache.set('id1', '1');
-	cache.set('id2', '2');
+	const cache = new Cacha('.cached', {ttl: 100});
+	await cache.set('id1', '1');
+	await cache.set('id2', '2');
 
 	t.ok(await cache.get('id1'));
 	t.ok(await cache.get('id2'));
 
-	await new Promise(resolve => setTimeout(resolve, 10));
+	await new Promise(resolve => setTimeout(resolve, 200));
 
 	cache.clean();
 
