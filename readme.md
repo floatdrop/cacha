@@ -46,13 +46,15 @@ Default: `86400000`
 How long (in milliseconds) keep entries in cache.
 
 
-### cache.get(id, [opts])
+### cache.get(id, [options])
 
-### cache.getSync(id, [opts])
+### cache.getSync(id, [options])
 
-### cache.set(id, content, [opts])
+### cache.set(id, content, [options])
 
-### cache.setSync(id, content, [opts])
+### cache.setSync(id, content, [options])
+
+Get and set methods for cache entries. `options` are passed to `fs` write and read methods (for example to specify encoding).
 
 ### cache.clean()
 
