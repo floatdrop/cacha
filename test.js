@@ -73,7 +73,7 @@ test('clean', async t => {
 	t.is(await cache.get('id2'), undefined);
 });
 
-test('updates mtime', async t => {
+test('updates atime', async t => {
 	const cache = new Cacha('/mtime');
 
 	t.is(await cache.set('id1', '1', 'utf8'), '1');
