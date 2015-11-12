@@ -2,11 +2,8 @@ import fs from 'fs';
 import test from 'ava';
 import mockFs from 'mock-fs';
 import homeOrTmp from 'home-or-tmp';
+import delay from 'delay';
 import Cacha from './';
-
-function time(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms))
-}
 
 mockFs({});
 
@@ -52,7 +49,7 @@ test('supports ttl', async t => {
 
 	t.is(await cache.set('id1', '1', 'utf8'), '1');
 
-	await time(100);
+	await delay(100);
 
 	t.is(await cache.get('id1', 'utf8'), undefined);
 });
@@ -65,7 +62,7 @@ test('clean', async t => {
 	t.ok(await cache.get('id1'));
 	t.ok(await cache.get('id2'));
 
-	await time(100);
+	await delay(100);
 
 	cache.clean();
 
@@ -79,7 +76,7 @@ test('updates mtime', async t => {
 	t.is(await cache.set('id1', '1', 'utf8'), '1');
 	const oldTime = Number(fs.statSync('/mtime/id1').atime);
 
-	await time(100);
+	await delay(100);
 
 	t.is(await cache.get('id1', 'utf8'), '1');
 	const newTime = Number(fs.statSync('/mtime/id1').atime);
