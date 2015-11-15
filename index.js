@@ -72,8 +72,17 @@ Cacha.prototype.get = function get(id, opts) {
 Cacha.prototype.getSync = function getSync(id, opts) {
 	var self = this;
 	var entryPath = path.join(this.path, id);
+	var stats;
 
-	var stats = fs.statSync(entryPath);
+	try {
+		stats = fs.statSync(entryPath);
+	} catch (err) {
+		if (err.code !== 'ENOENT') {
+			throw err;
+		}
+
+		return undefined;
+	}
 
 	if (Date.now() - Number(stats.atime) > self.opts.ttl) {
 		return undefined;

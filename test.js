@@ -45,6 +45,8 @@ test('gets entity', async t => {
 
 	t.is(cache.setSync('id2', '2', 'utf8'), '2');
 	t.is(cache.getSync('id2', 'utf8'), '2');
+
+	t.is(cache.getSync('id3', 'utf8'), undefined);
 });
 
 test('supports ttl', async t => {
