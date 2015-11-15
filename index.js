@@ -5,6 +5,7 @@ var path = require('path');
 var homeOrTmp = require('home-or-tmp');
 var PinkiePromise = require('pinkie-promise');
 var mkdirp = require('mkdirp');
+var pathIsAbsolute = require('path-is-absolute');
 
 var pify = require('pify');
 var fsP = pify.all(fs, PinkiePromise);
@@ -28,7 +29,7 @@ function Cacha(namespace, opts) {
 
 	this.ns = namespace;
 
-	if (this.ns[0] === '/') {
+	if (pathIsAbsolute(this.ns)) {
 		this.path = this.ns;
 	} else {
 		this.path = path.join(homeOrTmp, this.ns);
